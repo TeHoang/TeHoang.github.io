@@ -4,15 +4,16 @@ title: Isogeny, CSIDH, coast
 date: 2024-07-23 21:43 +0700
 tags: [ctf, crypto]
 categories: [CTF Writeups]
-description: Một chút isogeny-based crypto
+description: isogeny-based crypto
 img_path: /assets/img/imaginary2024
 image: isogeny.png
+toc: true 
 math: true 
 ---
 
 Một bài post nhỏ về isogeny, CSIDH và write-up cho bài coast trong ImaginaryCTF 2024. Do đây là lần đầu tiên mình tiếp cận mảng này (cũng như trình độ có hạn) nên những gì mình viết sẽ theo cách mình hiểu chứ không theo chuẩn logic toán học lắm, mong mọi người thông cảm. 
 
-# Isogeny 
+## Isogeny 
 
 Một cách dễ hiểu thì isogeny gồm 2 thứ: 
 * Một ánh xạ toàn ánh giữa 2 đường cong Elliptic 
@@ -27,9 +28,9 @@ Ngoài ra thì còn có các thông tin quan trọng như ord, ker, trong bài t
 $$
 
 \begin{aligned}
-\text{ker}\phi &= \{P \in E | \phi(P) = \infty\} \\
+\ker\phi &= \{P \in E | \phi(P) = \infty\} \\
 
-\text{ord}_\phi &= |\text{ker}\phi|
+ord_\phi &= |\ker\phi|
 \end{aligned}
 $$
 
@@ -60,7 +61,7 @@ sage: phi.degree() # Bậc của phi = số lượng phần tử của ker, ker 
 5
 ```
 
-Câu hỏi đặt ra, liệu $\text{ord}_\phi = 5$ chỉ là ngẫu nhiên? 
+Câu hỏi đặt ra, liệu $ord_\phi = 5$ chỉ là ngẫu nhiên? 
 
 Câu trả lời là vừa có và vừa không. Có là vì mình đã sử dụng `E.random_point()` để tạo ra điểm $P$, điểm này có bậc bao nhiêu thì mình không thể đoán trước được, tuy nhiên may mắn thay thì mình sinh được 1 phần tử có bậc bằng với bậc của đường cong $E$.
 
@@ -69,7 +70,7 @@ sage: P.order()
 420
 ```
 
-Còn về phần không là do cách mình tạo ra điểm $Q = 84P$. Do $\text{ord}_P = 420 \rightarrow 420P = \infty \rightarrow 5(84P)=\infty \rightarrow 5Q=\infty$. Vậy $\text{ord}_Q = 5$, từ đó $\text{ord}\phi = 5$ do $\text{ker}_\phi$ được sinh bởi $Q$.
+Còn về phần không là do cách mình tạo ra điểm $Q = 84P$. Do $ord_{P} = 420 \rightarrow 420P = \infty \rightarrow 5(84P) = \infty \rightarrow 5Q = \infty$. Vậy $ord_Q = 5$, từ đó $ord_{\phi} = 5$ do $\ker{\phi}$ được sinh bởi $Q$.
 
 Vậy điều gì sẽ xảy ra với $P$ khi nó đi qua $\phi$? 
 
@@ -86,10 +87,10 @@ sage: phi_P.order()
 60
 ```
 
-Ta có thể thấy rằng điểm $P$ với $ord_P = d$ thì khi đi qua isogeny $\phi$ với $\text{ord}_\phi = q$ thì $ord_{\phi(P)} = \dfrac{d}{q}$ 
+Ta có thể thấy rằng điểm $P, ord_P = d$ thì khi đi qua isogeny $\phi, ord_\phi = q \rightarrow ord_{\phi(P)} = \dfrac{d}{q}$ 
 
 
-# CSIDH
+## CSIDH
 
 CSIDH viết tắt cho commutative supersingular isogeny Diffie-Hellman protocol, từ đây ta có thể hiểu CSIDH là một protocol mật mã có sử dụng đến isogeny (các bạn có thể tìm hiểu thêm commutative và supersingular là gì nhé, mình sẽ không viết quá nhiều thứ trong post này). 
 
@@ -178,7 +179,7 @@ sage: phi(P).order()
 12
 ```
 
-Có vẻ như khi đi qua isogeny bậc $7$ thì $\text{ord}_P$ cũng bị chia $7$ giống như trường hợp đi theo chiều xuôi. Mọi người để ý rằng điểm $P, Q \in E_0$ chứ không phải $E$ nữa. 
+Có vẻ như khi đi qua isogeny bậc $7$ thì $ord_P$ cũng bị chia $7$ giống như trường hợp đi theo chiều xuôi. Mọi người để ý rằng điểm $P, Q \in E_0$ chứ không phải $E$ nữa. 
 
 ```python
 sage: P in E
@@ -191,11 +192,11 @@ Vậy nên nếu như mình tạo ra một điểm $P$ $\in E$ và muốn đi th
 
 
 
-# Coast 
+## Coast 
 
 Phần này sẽ là lời giải của mình cho 1 bài liên quan đến CSIDH trong ImaginaryCTF 2024. File gốc nằm ở [github của tác giả](https://github.com/maple3142/My-CTF-Challenges/blob/master/ImaginaryCTF%202024/coast/chall.sage).
 
-## Challenge 
+### Challenge 
 ```python
 from Crypto.Cipher import AES
 from hashlib import sha256
@@ -272,6 +273,8 @@ print(f"{ct = }")
 print(f"{iv = }")
 ```
 
+### Solution
+
 Nhìn sơ qua thì mình có Alice và Bob trao đổi thông tin dựa trên CSIDH, mình sẽ cần lấy được khóa bí mật của Alice hoặc Bob từ khóa công khai để tìm lại flag. 
 
 Ở đây khóa bí mật của Alice và Bob có dạng $\{e_1, e_2, \dots, e_k\}$ với $k$ là số lượng phần tử trong mảng `ls` và $-1 \leq e_i \leq 1$
@@ -304,23 +307,26 @@ Tuy nhiên chỉ với nhiêu đây thông tin thì vẫn chưa đủ, nếu m�
 
 Điều gì sẽ xảy ra với quá trình đi isogeny nếu mình chỉ đi theo chiều xuôi cũng như có thông tin về điểm $G$ sau quá trình đi? 
 
+Nhớ lại ở mục **Isogeny** mình có kết luận như sau: 
 
-> Điểm $P$ với $ord_P = d$ thì khi đi qua isogeny $\phi$ với $\text{ord}_\phi = q$ thì $ord_{\phi(P)} = \dfrac{d}{q}$
+> Điểm $P, ord_P = d$ thì khi đi qua isogeny $\phi, ord_\phi = q \rightarrow ord_{\phi(P)} = \dfrac{d}{q}$
 {: .prompt-info }
 
-Gọi $G$ là điểm ban đầu và $G_A$ là điểm sau khi Alice đi xong các isogeny của mình. Nếu như $\text{ord}_G = d$ thì $\text{ord}_{G_A} = \dfrac{d}{\prod{p_i}}$ với $p_i$ là các bậc mà Alice đi. Do mỗi bậc mình chỉ đi tối đa 1 lần, chúng ta có thể xây dựng lại khóa bí mật của Alice như sau: 
+Gọi $G$ là điểm ban đầu và $G_A$ là điểm sau khi Alice đi xong các isogeny của mình. Nếu như $ord_G = d$ thì $ord_{G_A} = \dfrac{d}{\prod{p_i}}$ với $p_i$ là các bậc mà Alice đi. Do mỗi bậc mình chỉ đi tối đa 1 lần, chúng ta có thể xây dựng lại khóa bí mật của Alice như sau: 
 
 1. Lặp qua từng $p_i$ trong mảng `ls`
-2. Kiểm tra xem nếu $\text{ord}_{G_A}$ chia hết cho $p_i$
+2. Kiểm tra xem nếu $ord_{G_A}$ chia hết cho $p_i$
 3. Nếu có thì $e_i = 1$, không thì $e_i = 0$
 
-Tuy nhiên trong lúc mình làm thì mình thấy việc gọi hàm để tính $\text{ord}_{G_A}$ khá lâu nên với mỗi $p_i$ thì mình đi tính điểm $T = \dfrac{d}{p_i} G_A$. Khi này sẽ xảy ra 2 trường hợp: 
+Tuy nhiên trong lúc mình làm thì mình thấy việc gọi hàm để tính $ord_{G_A}$ khá lâu nên với mỗi $p_i$ thì mình đi tính điểm $T = \dfrac{d}{p_i} G_A$. Khi này sẽ xảy ra 2 trường hợp: 
 
 1. $T = \infty \rightarrow \dfrac{d}{p_i}$ là bội của $ord_{G_A}\rightarrow$ $p_i$ không có trong phân tích thừa số nguyên tố của $ord_{G_A} \rightarrow$ Alice có đi isogeny bậc $p_i$ $\rightarrow e_i = 1$    
 
 2. Ngược lại $T \not= \infty \rightarrow e_i = 0$
 
 Sau khi có khóa bí mật của Alice thì chúng ta có thể dùng khóa công khai của Bob để tìm lại khóa chung và lấy lại flag. 
+
+### Solution script
 
 ```python
 from Crypto.Cipher import AES
